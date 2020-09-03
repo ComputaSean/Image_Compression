@@ -94,4 +94,4 @@ fabric.properties
 
 .idea/
 src/Images
-src/ImagePartition/__pycache__/QuadTree.cpython-37.pyc
+*.pyc

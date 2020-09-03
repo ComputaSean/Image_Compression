@@ -1,4 +1,10 @@
+from typing import Optional
+
 import numpy as np
+
+from imagepartition.internal_node import InternalNode
+from imagepartition.leaf_node import LeafNode
+from imagepartition.tree_node import TreeNode
 
 
 class QuadTree:
@@ -9,14 +15,14 @@ class QuadTree:
     Changing the input parameters will determine the resulting image fidelity.
     """
 
-    def __init__(self, raster, max_depth, max_std_dev):
+    def __init__(self, raster: np.array, max_depth: int, max_std_dev: int) -> None:
         """
         Creates a quadtree from the given raster image.
         Construction runtime is O(nlog(n)).
 
         :param raster: 3D array of the image with row, col, and rgba values as the first, second, and third indices
         :param max_depth: maximum depth of the resulting quadtree
-        :param max_std_dev: tolerance for pixel disparity before requiring a split
+        :param max_std_dev: tolerance for pixel disparity in a quadrant before requiring a recursive split
         """
         # Invalid raster dimensions
         if len(raster.shape) != 3:
@@ -25,7 +31,7 @@ class QuadTree:
             self.root = QuadTree.construct(raster, max_depth, max_std_dev)
 
     @staticmethod
-    def construct(raster, max_depth, max_std_dev):
+    def construct(raster: np.array, max_depth: int, max_std_dev: int) -> Optional[TreeNode]:
         """
         Decompose a raster image into a quadtree.
 
@@ -44,7 +50,6 @@ class QuadTree:
 
         # Recursive Case: Divide into partitions for finer detail
         else:
-
             # Construct all 4 regions of the quadtree by splitting raster along the row and column axes
             quadrants = [second_split for first_split in np.array_split(raster, 2, axis=0)
                          for second_split in np.array_split(first_split, 2, axis=1)]
@@ -57,7 +62,7 @@ class QuadTree:
             return InternalNode(q1, q2, q3, q4)
 
     @staticmethod
-    def check_homogeneity(raster, threshold):
+    def check_homogeneity(raster: np.array, threshold: int) -> bool:
         """
         Returns whether the pixels of the raster image are similar enough in color.
 
@@ -71,7 +76,7 @@ class QuadTree:
                 return False
         return True
 
-    def highlight_leaves(self):
+    def highlight_leaves(self) -> None:
         """
         Creates a black border around all pixel quadrants/leaves of the quadtree.
 
@@ -81,15 +86,15 @@ class QuadTree:
             QuadTree.highlight_leaves_helper(self.root)
 
     @staticmethod
-    def highlight_leaves_helper(cur_node):
+    def highlight_leaves_helper(cur_node: TreeNode) -> None:
         """
-        Creates a black border around all leaves of all quadrants of the current node.
+        Creates a black border around all pixel quadrants/leaves of the current node.
 
         :param cur_node: current node of the quadtree
         :return: None
         """
         if type(cur_node) is LeafNode:
-            LeafNode.highlight_border(cur_node.get_pixels())
+            LeafNode.highlight_border(cur_node.pixels)
         else:
             # Recursively highlight all leaves in all quadrants
             for i in range(4):
@@ -97,7 +102,7 @@ class QuadTree:
                 if quadrant is not None:
                     QuadTree.highlight_leaves_helper(cur_node.get_quadrant(i))
 
-    def get_height(self):
+    def get_height(self) -> int:
         """
         Gets the height of the quadtree.
 
@@ -106,7 +111,7 @@ class QuadTree:
         return QuadTree.get_height_helper(self.root)
 
     @staticmethod
-    def get_height_helper(cur_node):
+    def get_height_helper(cur_node: TreeNode) -> int:
         """
         Helper for get_height().
 
@@ -122,65 +127,3 @@ class QuadTree:
                 if quadrant is not None:
                     subtree_heights[i] += QuadTree.get_height_helper(quadrant)
             return max(subtree_heights) + 1
-
-
-class InternalNode:
-    """
-    Corresponds to a node of the quadtree that is a parent to some other node or a null pointer.
-    """
-
-    def __init__(self, q1, q2, q3, q4):
-        self.quadrants = [q1, q2, q3, q4]
-
-    def set_quadrant(self, index, node):
-        self.quadrants[index] = node
-
-    def get_quadrant(self, index):
-        return self.quadrants[index]
-
-
-class LeafNode:
-    """
-    Corresponds to a node of the quadtree that represents some pixel quadrant of an image.
-    All pixels of the leaf node will take on their collective averaged pixel color.
-    """
-
-    def __init__(self, pixels):
-        # Single pixels don't need to be averaged out
-        if pixels.shape[0] != 1 and pixels.shape[1] != 1:
-            LeafNode.average_pixels(pixels)
-        self.pixels = pixels
-
-    def get_pixels(self):
-        return self.pixels
-
-    @staticmethod
-    def average_pixels(pixels):
-        """
-        Sets the color of every pixel in pixels to be the averaged pixel color of all pixels.
-
-        :param pixels: pixel quadrant that a leaf node represents
-        :return: None
-        """
-        rgb = np.mean(pixels, (0, 1))  # Calculate pixel color average
-        # Set every pixel of the quadrant to the average color
-        for row in range(pixels.shape[0]):
-            for col in range(pixels.shape[1]):
-                pixels[row][col][0] = rgb[0]
-                pixels[row][col][1] = rgb[1]
-                pixels[row][col][2] = rgb[2]
-
-    @staticmethod
-    def highlight_border(pixels):
-        """
-        Creates a black border around the given pixel quadrant.
-
-        :param pixels: pixel quadrant that a leaf node represents
-        :return: None
-        """
-        for row in range(pixels.shape[0]):
-            for col in range(pixels.shape[1]):
-                if row == 0 or col == 0 or row == pixels.shape[0] - 1 or col == pixels.shape[1] - 1:
-                    pixels[row][col][0] = 0
-                    pixels[row][col][1] = 0
-                    pixels[row][col][2] = 0
