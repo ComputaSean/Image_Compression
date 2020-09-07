@@ -121,9 +121,11 @@ class QuadTree:
         if cur_node is None or type(cur_node) is LeafNode:
             return 0
         else:
-            subtree_heights = np.array([0, 0, 0, 0])
+            max_height = -float('inf')
             for i in range(4):
                 quadrant = cur_node.get_quadrant(i)
                 if quadrant is not None:
-                    subtree_heights[i] += QuadTree._get_height_helper(quadrant)
-            return max(subtree_heights) + 1
+                    quadrant_height = QuadTree._get_height_helper(quadrant)
+                    if quadrant_height > max_height:
+                        max_height = quadrant_height
+            return max_height + 1
