@@ -15,7 +15,7 @@ class QuadTree:
     Changing the input parameters will determine the resulting image fidelity.
     """
 
-    def __init__(self, raster: np.array, max_depth: int, max_std_dev: int) -> None:
+    def __init__(self, raster: np.ndarray, max_depth: int, max_std_dev: int) -> None:
         """
         Creates a quadtree from the given raster image.
         Construction runtime is O(nlog(n)).
@@ -28,10 +28,10 @@ class QuadTree:
         if len(raster.shape) != 3:
             self.root = None
         else:
-            self.root = QuadTree.construct(raster, max_depth, max_std_dev)
+            self.root = QuadTree._construct(raster, max_depth, max_std_dev)
 
     @staticmethod
-    def construct(raster: np.array, max_depth: int, max_std_dev: int) -> Optional[TreeNode]:
+    def _construct(raster: np.ndarray, max_depth: int, max_std_dev: int) -> Optional[TreeNode]:
         """
         Decompose a raster image into a quadtree.
 
@@ -45,7 +45,7 @@ class QuadTree:
             return None
 
         # Base Case: stop when maximum depth is achieved, or if pixels of raster are similar enough
-        elif max_depth <= 0 or QuadTree.check_homogeneity(raster, max_std_dev):
+        elif max_depth <= 0 or QuadTree._check_homogeneity(raster, max_std_dev):
             return LeafNode(raster)
 
         # Recursive Case: Divide into partitions for finer detail
@@ -54,15 +54,15 @@ class QuadTree:
             quadrants = [second_split for first_split in np.array_split(raster, 2, axis=0)
                          for second_split in np.array_split(first_split, 2, axis=1)]
 
-            q1 = QuadTree.construct(quadrants[0], max_depth - 1, max_std_dev)
-            q2 = QuadTree.construct(quadrants[1], max_depth - 1, max_std_dev)
-            q3 = QuadTree.construct(quadrants[2], max_depth - 1, max_std_dev)
-            q4 = QuadTree.construct(quadrants[3], max_depth - 1, max_std_dev)
+            q1 = QuadTree._construct(quadrants[0], max_depth - 1, max_std_dev)
+            q2 = QuadTree._construct(quadrants[1], max_depth - 1, max_std_dev)
+            q3 = QuadTree._construct(quadrants[2], max_depth - 1, max_std_dev)
+            q4 = QuadTree._construct(quadrants[3], max_depth - 1, max_std_dev)
 
             return InternalNode(q1, q2, q3, q4)
 
     @staticmethod
-    def check_homogeneity(raster: np.array, threshold: int) -> bool:
+    def _check_homogeneity(raster: np.ndarray, threshold: int) -> bool:
         """
         Returns whether the pixels of the raster image are similar enough in color.
 
@@ -83,10 +83,10 @@ class QuadTree:
         :return: None
         """
         if self.root is not None:
-            QuadTree.highlight_leaves_helper(self.root)
+            QuadTree._highlight_leaves_helper(self.root)
 
     @staticmethod
-    def highlight_leaves_helper(cur_node: TreeNode) -> None:
+    def _highlight_leaves_helper(cur_node: TreeNode) -> None:
         """
         Creates a black border around all pixel quadrants/leaves of the current node.
 
@@ -100,7 +100,7 @@ class QuadTree:
             for i in range(4):
                 quadrant = cur_node.get_quadrant(i)
                 if quadrant is not None:
-                    QuadTree.highlight_leaves_helper(cur_node.get_quadrant(i))
+                    QuadTree._highlight_leaves_helper(cur_node.get_quadrant(i))
 
     def get_height(self) -> int:
         """
@@ -108,10 +108,10 @@ class QuadTree:
 
         :return: quadtree height
         """
-        return QuadTree.get_height_helper(self.root)
+        return QuadTree._get_height_helper(self.root)
 
     @staticmethod
-    def get_height_helper(cur_node: TreeNode) -> int:
+    def _get_height_helper(cur_node: TreeNode) -> int:
         """
         Helper for get_height().
 
@@ -125,5 +125,5 @@ class QuadTree:
             for i in range(4):
                 quadrant = cur_node.get_quadrant(i)
                 if quadrant is not None:
-                    subtree_heights[i] += QuadTree.get_height_helper(quadrant)
+                    subtree_heights[i] += QuadTree._get_height_helper(quadrant)
             return max(subtree_heights) + 1

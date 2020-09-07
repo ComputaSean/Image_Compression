@@ -9,14 +9,14 @@ class LeafNode(TreeNode):
     All pixels of the leaf node will take on their collective averaged pixel color.
     """
 
-    def __init__(self, pixels: np.array) -> None:
+    def __init__(self, pixels: np.ndarray) -> None:
         # Single pixels don't need to be averaged out
         if pixels.shape[0] != 1 and pixels.shape[1] != 1:
-            LeafNode.average_pixels(pixels)
+            LeafNode._average_pixels(pixels)
         self.pixels = pixels
 
     @staticmethod
-    def average_pixels(pixels: np.array) -> None:
+    def _average_pixels(pixels: np.ndarray) -> None:
         """
         Sets the color of every pixel in pixels to be the averaged pixel color of all pixels.
 
@@ -32,7 +32,7 @@ class LeafNode(TreeNode):
                 pixels[row][col][2] = rgb[2]
 
     @staticmethod
-    def highlight_border(pixels: np.array) -> None:
+    def highlight_border(pixels: np.ndarray) -> None:
         """
         Creates a black border around the given pixel quadrant.
 
